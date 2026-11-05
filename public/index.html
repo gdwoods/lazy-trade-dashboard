@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cobra Trading Coach</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --card: #1a1d26;
+      --border: #2a2d3a;
+      --accent: #4f8ef7;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --sidebar-w: 220px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    #sidebar .logo {
+      padding: 20px 16px 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.5px;
+    }
+
+    #sidebar .logo span { color: var(--muted); font-weight: 400; font-size: 0.75rem; display: block; margin-top: 2px; }
+
+    nav { padding: 12px 8px; flex: 1; }
+
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 2px;
+    }
+
+    nav a:hover { background: #252836; color: var(--text); }
+    nav a.active { background: rgba(79,142,247,0.15); color: var(--accent); }
+    nav a .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* ── Main ── */
+    #main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+      background: var(--bg);
+    }
+
+    #page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    #content { }
+
+    /* ── Stat Cards ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 16px;
+    }
+
+    .stat-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-card .value.pos { color: var(--green); }
+    .stat-card .value.neg { color: var(--red); }
+    .stat-card .value.neutral { color: var(--text); }
+    .stat-card .value.accent { color: var(--accent); }
+
+    /* ── Section headers ── */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 24px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(42,45,58,0.6);
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .warn { color: var(--yellow); }
+
+    .row-red td { background: rgba(239,68,68,0.07); }
+    .row-green td { background: rgba(34,197,94,0.07); }
+
+    /* ── Chart ── */
+    .chart-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Forms ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    input, select, textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
+    /* ── Trade detail panel ── */
+    /* ── Trade Detail Modal ── */
+    #trade-panel {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    #trade-panel.open {
+      display: flex;
+    }
+
+    #trade-panel .modal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 1400px;
+      height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #trade-panel .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #trade-panel .modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    #trade-panel .modal-header-meta {
+      display: flex;
+      gap: 24px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    #trade-panel .modal-header-meta strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    #trade-panel .close-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.6rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    #trade-panel .close-btn:hover {
+      color: var(--text);
+    }
+
+    #trade-panel .modal-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.25fr 1.75fr;
+      gap: 24px;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    #trade-panel .modal-body-left {
+      overflow-y: auto;
+      padding-right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.98) rgba(15, 23, 42, 0.45);
+    }
+
+    #trade-panel .modal-body-left::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    #trade-panel .modal-body-left::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.35);
+      border-radius: 999px;
+    }
+
+    #trade-panel .modal-body-left::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.45);
+    }
+
+    #trade-panel .modal-body-left::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 1);
+    }
+
+    #trade-panel .modal-body-right {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+      overflow: hidden;
+      border-left: 1px solid var(--border);
+      padding-left: 18px;
+    }
+
+    #trade-panel #panel-right {
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.98) rgba(15, 23, 42, 0.45);
+    }
+
+    #trade-panel #panel-right::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    #trade-panel #panel-right::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.35);
+      border-radius: 999px;
+    }
+
+    #trade-panel #panel-right::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 999px;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.45);
+    }
+
+    #trade-panel #panel-right::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 1);
+    }
+
+    #trade-panel #modal-coach-panel {
+      flex-shrink: 0;
+      min-height: 160px;
+      max-height: 220px;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+
+    #trade-panel .detail-section {
+      margin-bottom: 18px;
+    }
+
+    #trade-panel .detail-section h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    #trade-panel .detail-kv {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    #trade-panel .kv {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    #trade-panel .kv .k {
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-bottom: 4px;
+    }
+
+    #trade-panel .kv .v {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .detail-kv { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+    .kv { background: var(--bg); border-radius: 6px; padding: 10px 12px; }
+    .kv .k { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .kv .v { font-size: 0.95rem; font-weight: 600; }
+
+    /* ── Coaching ── */
+    .insight-card {
+      background: rgba(79,142,247,0.1);
+      border: 1px solid rgba(79,142,247,0.3);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .insight-card .insight-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .insight-card .insight-text {
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; gap: 8px; align-items: center; margin-top: 16px; }
+    .pagination button {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .pagination button:disabled { opacity: 0.4; cursor: default; }
+    .pagination .page-info { color: var(--muted); font-size: 0.85rem; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: var(--green); }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+
+    .loading { color: var(--muted); font-size: 0.9rem; padding: 20px 0; }
+
+    tr.clickable { cursor: pointer; }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      flex: 1;
+      font-size: 0.9rem;
+    }
+    .drop-zone.dragover, .drop-zone:hover, .drop-zone:focus { border-color: var(--accent); background: rgba(79,142,247,0.06); outline: none; }
+.drop-zone:focus { box-shadow: 0 0 0 2px rgba(79,142,247,0.3); }
+    .drop-zone.loading { border-color: var(--accent); opacity: 0.7; pointer-events: none; }
+    .drop-zone.done { border-color: #22c55e; }
+    .drop-zone.paste-target { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,142,247,0.4); }
+    .drop-zone.paste-target::after { content: '⌘V'; position: absolute; top: 6px; right: 8px; font-size: 0.7rem; color: var(--accent); opacity: 0.8; }
+    .drop-zone { position: relative; }
+    .autofilled { background: rgba(34,197,94,0.12) !important; }
+    .form-section { margin-bottom: 24px; }
+    .form-section .section-title { margin-bottom: 12px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text); padding: 8px 10px; font-size: 0.875rem; width: 100%;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: var(--accent);
+    }
+
+    /* ── Image Modal ── */
+    #image-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    #image-modal.open { display: flex; }
+
+    .modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 85vh;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 1.8rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .modal-close:hover { background: rgba(255,255,255,0.2); }
+
+    .screenshot-thumb {
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .screenshot-thumb:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(79,142,247,0.3); }
+
+    /* ── Sidebar Coach ── */
+    #coach-messages-sidebar {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(79,142,247,0.3) transparent;
+    }
+
+    #coach-messages-sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #coach-messages-sidebar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #coach-messages-sidebar::-webkit-scrollbar-thumb {
+      background: rgba(79,142,247,0.3);
+      border-radius: 3px;
+    }
+
+    .coach-msg {
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .coach-msg.user {
+      background: rgba(79,142,247,0.15);
+      border-left: 2px solid var(--accent);
+      color: var(--text);
+    }
+
+    .coach-msg.assistant {
+      background: rgba(34,197,94,0.1);
+      border-left: 2px solid var(--green);
+      color: var(--text);
+    }
+
+    .coach-msg.error {
+      background: rgba(239,68,68,0.1);
+      border-left: 2px solid var(--red);
+      color: var(--red);
+    }
+
+    .coach-model-select {
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      font-size: 0.75rem;
+    }
+
+    .coach-model-select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── Coach Panel in Modal ── */
+    #modal-coach-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+    }
+
+    #modal-coach-header {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #modal-coach-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 8px;
+    }
+
+    #modal-coach-messages .coach-msg {
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    #modal-coach-messages .coach-msg.user {
+      background: rgba(79,142,247,0.15);
+      border-left: 3px solid var(--accent);
+      align-self: flex-end;
+      max-width: 85%;
+    }
+
+    #modal-coach-messages .coach-msg.assistant {
+      background: rgba(34,197,94,0.1);
+      border-left: 3px solid var(--green);
+      align-self: flex-start;
+      max-width: 85%;
+    }
+
+    #modal-coach-messages .coach-msg.error {
+      background: rgba(239,68,68,0.1);
+      border-left: 3px solid var(--red);
+      color: var(--red);
+    }
+
+    #modal-coach-input-area {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    #modal-coach-model-select {
+      padding: 6px 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      font-size: 0.75rem;
+    }
+
+    #modal-coach-model-select:focus {
+      border-color: var(--accent);
+    }
+
+    #modal-coach-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      resize: vertical;
+      min-height: 50px;
+      max-height: 100px;
+    }
+
+    #modal-coach-input:focus {
+      border-color: var(--accent);
+    }
+
+    #modal-coach-send {
+      padding: 8px 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.8rem;
+      transition: opacity 0.15s;
+    }
+
+    #modal-coach-send:hover {
+      opacity: 0.9;
+    }
+
+    #modal-coach-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #chart-pop-modal.open,
+    #running-pl-pop-modal.open { display:flex !important; }
+
+    @media (max-width: 768px) {
+      #main { padding: 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      #trade-panel .modal-body { grid-template-columns: 1fr; }
+    }
+  </style>
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+  <div id="sidebar">
+    <div class="logo">
+      Cobra Coach
+      <span>Trading Analytics</span>
+    </div>
+    <nav>
+      <a href="#dashboard" class="nav-link" data-page="dashboard">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a href="#trades" class="nav-link" data-page="trades">
+        <span class="icon">📋</span> Trades
+      </a>
+      <a href="#analysis" class="nav-link" data-page="analysis">
+        <span class="icon">🔬</span> Analysis
+      </a>
+      <a href="#pretrade" class="nav-link" data-page="pretrade">
+        <span class="icon">📝</span> Pre-Trade
+      </a>
+      <a href="#coaching" class="nav-link" data-page="coaching">
+        <span class="icon">🎯</span> Coaching
+      </a>
+
+      <div style="margin:14px 10px 8px; padding-top:10px; border-top:1px solid var(--border); color:var(--muted); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:700;">Paper Trades</div>
+      <a href="#watchlist" class="nav-link" data-page="watchlist">
+        <span class="icon">👀</span> Watchlist
+      </a>
+      <a href="#lazy-watchlist" class="nav-link" data-page="lazy-watchlist">
+        <span class="icon">🦥</span> Lazy Trades
+      </a>
+      <a href="#dux" class="nav-link" data-page="dux">
+        <span class="icon">🔻</span> Dux Scanner
+      </a>
+    </nav>
+
+    <!-- Coach Chat Widget in Sidebar - HIDDEN, moved to modal -->
+    <div id="sidebar-coach" style="display: none;">
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="page-title">Dashboard</div>
+    <div id="content"><p class="loading">Loading...</p></div>
+  </div>
+
+  <!-- Trade detail modal -->
+  <div id="trade-panel">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h2 id="modal-title"></h2>
+          <div class="modal-header-meta">
+            <div><strong id="modal-symbol"></strong></div>
+            <div><strong id="modal-date"></strong></div>
+            <div id="modal-pl"></div>
+          </div>
+        </div>
+        <button class="close-btn" id="panel-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-body-left" id="panel-left"></div>
+        <div class="modal-body-right">
+          <div id="panel-right"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="image-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">✕</button>
+      <img id="modal-image" src="" alt="Full size image">
+    </div>
+  </div>
+
+  <!-- Chart Pop-out Modal -->
+  <div id="chart-pop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1200;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;width:min(1400px,96vw);height:min(760px,92vh);display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <strong>Intraday Chart — Expanded</strong>
+        <button id="chart-pop-close" class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border);color:var(--text)">✕ Close</button>
+      </div>
+      <div id="chart-pop-container" style="flex:1;min-height:0"></div>
+    </div>
+  </div>
+
+  <!-- Running P/L Pop-out Modal -->
+  <div id="running-pl-pop-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1200;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;width:min(1400px,96vw);height:min(760px,92vh);display:flex;flex-direction:column;overflow:hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <strong>Running P/L — Expanded</strong>
+        <button id="running-pl-pop-close" class="btn btn-sm" style="background:var(--bg);border:1px solid var(--border);color:var(--text)">✕ Close</button>
+      </div>
+      <div id="running-pl-pop-container" style="flex:1;min-height:0"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js?v=lazy-watchlist-2"></script>
+</body>
+</html>

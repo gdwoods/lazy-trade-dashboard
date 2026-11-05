@@ -1,0 +1,28 @@
+{
+  "name": "lazy-trade-dashboard",
+  "version": "1.0.0",
+  "description": "Cobra Trading Coach / Lazy Trade Dashboard — trade analysis, lazy short-side screener, and pre-trade notes",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "lazy:screener": "node scripts/trading/lazy-trade-screener.mjs",
+    "db:init": "node scripts/init-db.mjs",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.8.0",
+    "express": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "trading",
+    "dashboard",
+    "lazy-trade",
+    "short-selling",
+    "trade-analysis"
+  ],
+  "license": "MIT"
+}
