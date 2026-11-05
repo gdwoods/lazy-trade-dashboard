@@ -35,69 +35,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', port: 3456 });
 });
 
-// Load Claude API key once at startup (avoids GPG timeout during requests)
-let CLAUDE_API_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
-if (!CLAUDE_API_KEY) {
-  for (const secret of ['api/claude', 'api/anthropic']) {
-    try {
-      CLAUDE_API_KEY = execFileSync('pass', ['show', secret], { encoding: 'utf8', timeout: 15000 })
-        .trim().split('\n')[0].trim();
-      if (CLAUDE_API_KEY) {
-        console.log(`Claude API key loaded from pass (${secret}).`);
-        break;
-      }
-    } catch (e) {
-      console.warn(`Warning: Could not load ${secret} from pass:`, e.message);
-    }
-  }
-  if (!CLAUDE_API_KEY) {
-    console.warn('Set ANTHROPIC_API_KEY env var as fallback.');
-  }
-}
-
-// Load Polygon API key once at startup
-let POLYGON_API_KEY = process.env.POLYGON_API_KEY || '';
-if (!POLYGON_API_KEY) {
-  try {
-    POLYGON_API_KEY = execFileSync('pass', ['show', 'api/polygon'], { encoding: 'utf8', timeout: 15000 })
-      .trim().split('\n')[0].trim();
-    console.log('Polygon API key loaded from pass.');
-  } catch (e) {
-    console.warn('Warning: Could not load api/polygon from pass:', e.message);
-  }
-}
-
-// Massive is the Dux scanner's market-data source. Prefer its dedicated pass entry,
-// then fall back to an environment value or the legacy Polygon credential.
-let MASSIVE_API_KEY = (process.env.MASSIVE_API_KEY || '').trim();
-if (!MASSIVE_API_KEY) {
-  try {
-    MASSIVE_API_KEY = execFileSync('pass', ['show', 'api/massive'], { encoding: 'utf8', timeout: 15000 })
-      .trim().split('\n')[0].trim();
-    console.log('Massive API key loaded from pass.');
-  } catch (e) {
-    MASSIVE_API_KEY = POLYGON_API_KEY;
-    console.warn('Warning: Could not load api/massive from pass; using Polygon fallback if available.');
-  }
-}
-
-// Load Alpaca API credentials once at startup
-let ALPACA_API_KEY = '';
-let ALPACA_SECRET_KEY = '';
-if (!process.env.ALPACA_API_KEY) {
-  try {
-    const alpacaCreds = execFileSync('pass', ['show', 'api/alpaca'], { encoding: 'utf8', timeout: 15000 })
-      .trim().split('\n');
-    ALPACA_API_KEY = alpacaCreds[0]?.trim() || '';
-    ALPACA_SECRET_KEY = alpacaCreds[1]?.trim() || '';
-    console.log('Alpaca API credentials loaded from pass.');
-  } catch (e) {
-    console.warn('Warning: Could not load api/alpaca from pass:', e.message);
-  }
-} else {
-  ALPACA_API_KEY = process.env.ALPACA_API_KEY;
-  ALPACA_SECRET_KEY = process.env.ALPACA_SECRET_KEY;
-}
+// Credentials are supplied explicitly through environment variables.
+const CLAUDE_API_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
+const POLYGON_API_KEY = (process.env.POLYGON_API_KEY || '').trim();
+const MASSIVE_API_KEY = (process.env.MASSIVE_API_KEY || POLYGON_API_KEY).trim();
+const ALPACA_API_KEY = (process.env.ALPACA_API_KEY || '').trim();
+const ALPACA_SECRET_KEY = (process.env.ALPACA_SECRET_KEY || '').trim();
 
 // Load Tradier token (already loaded above as TRADIER_TOKEN)
 // Reuse the existing token for market data queries
